@@ -32,6 +32,9 @@ public class MyRobotController : MonoBehaviour
     private Vector3 gradient;
     private Vector3 theta;
 
+    public LineRenderer lineRenderer1;
+    public LineRenderer lineRenderer2;
+    public LineRenderer lineRenderer3;
 
     private float l1;
     private float l2;
@@ -56,6 +59,21 @@ public class MyRobotController : MonoBehaviour
         theta = Vector3.zero;
 
         distance = Vector3.Distance(Joint0.position, Stud_target.position);
+
+        InitializeLineRenderer(lineRenderer1);
+        InitializeLineRenderer(lineRenderer2);
+        InitializeLineRenderer(lineRenderer3);
+    }
+
+    void InitializeLineRenderer(LineRenderer lineRenderer)
+    {
+        // Set up the LineRenderer properties like width, color, etc.
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
+        lineRenderer.positionCount = 2; // Each bone only needs 2 points (start and end)
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));  // Basic material for 2D
+        lineRenderer.startColor = Color.white;
+        lineRenderer.endColor = Color.grey;
     }
 
     // Update is called once per frame
@@ -70,10 +88,12 @@ public class MyRobotController : MonoBehaviour
         {
             PickStudAnim();
         }
-            
+
+        UpdateVisualLinks();
+
         //}
 
-        
+
     }
 
     void PickStudAnim()
@@ -156,6 +176,18 @@ public class MyRobotController : MonoBehaviour
     void MoveTarget(Transform target)
     {
         target.position = endFactor.position;
+    }
+
+    void UpdateVisualLinks()
+    {
+        lineRenderer1.SetPosition(0, Joint0.position);
+        lineRenderer1.SetPosition(1, Joint1.position); 
+
+        lineRenderer2.SetPosition(0, Joint1.position);
+        lineRenderer2.SetPosition(1, Joint2.position);
+
+        lineRenderer3.SetPosition(0, Joint2.position); 
+        lineRenderer3.SetPosition(1, endFactor.position);
     }
 
     Vector3 CalculateGradient(Transform target)
