@@ -36,6 +36,12 @@ public class MyRobotController : MonoBehaviour
     public LineRenderer lineRenderer2;
     public LineRenderer lineRenderer3;
 
+    public float collidersSize;
+
+    private BoxCollider2D colliderBetweenJoint0And1;
+    private BoxCollider2D colliderBetweenJoint1And2;
+    private BoxCollider2D colliderBetweenJoint2And3;
+
     private float l1;
     private float l2;
     private float l3;
@@ -63,6 +69,10 @@ public class MyRobotController : MonoBehaviour
         InitializeLineRenderer(lineRenderer1);
         InitializeLineRenderer(lineRenderer2);
         InitializeLineRenderer(lineRenderer3);
+
+        colliderBetweenJoint0And1 = CreateColliderBetween(Joint0, Joint1);
+        colliderBetweenJoint1And2 = CreateColliderBetween(Joint1, Joint2);
+        colliderBetweenJoint2And3 = CreateColliderBetween(Joint2, endFactor);
     }
 
     void InitializeLineRenderer(LineRenderer lineRenderer)
@@ -74,6 +84,19 @@ public class MyRobotController : MonoBehaviour
         lineRenderer.material = new Material(Shader.Find("Sprites/Default"));  // Basic material for 2D
         lineRenderer.startColor = Color.white;
         lineRenderer.endColor = Color.grey;
+
+
+    }
+
+    BoxCollider2D CreateColliderBetween(Transform jointA, Transform jointB)
+    {
+        GameObject colliderObject = new GameObject("ColliderBetween" + jointA.name + "And" + jointB.name);
+        colliderObject.transform.parent = transform;  // Hacer que el objeto collider sea hijo del controlador
+
+        BoxCollider2D boxCollider = colliderObject.AddComponent<BoxCollider2D>();
+        boxCollider.isTrigger = true; 
+
+        return boxCollider;
     }
 
     // Update is called once per frame
@@ -83,8 +106,12 @@ public class MyRobotController : MonoBehaviour
 
         //if (distance <= maxDistance)
         //{
-            
-        if(pickTarget)
+        UpdateCollider(colliderBetweenJoint0And1, Joint0.position, Joint1.position);
+        UpdateCollider(colliderBetweenJoint1And2, Joint1.position, Joint2.position);
+        UpdateCollider(colliderBetweenJoint2And3, Joint2.position, endFactor.position);
+
+
+        if (pickTarget)
         {
             PickStudAnim();
         }
@@ -135,11 +162,18 @@ public class MyRobotController : MonoBehaviour
 
             gradient = CalculateGradient(target);
             theta += -alpha * gradient;
-            endFactor.position = GetEndFactorPosition();
 
+            Vector3 newEndFactorPos = GetEndFactorPosition();
+            Vector3 newJoint1Pos = GetJoint1Position();
+            Vector3 newJoint2Pos = GetJoint2Position();
 
-            Joint1.position = GetJoint1Position();
-            Joint2.position = GetJoint2Position();
+            // Verifica si se cruza con el segmento previo
+            if (!LinesIntersect(Joint0.position, newJoint1Pos, newJoint1Pos, newJoint2Pos))
+            {
+                endFactor.position = newEndFactorPos;
+                Joint1.position = newJoint1Pos;
+                Joint2.position = newJoint2Pos;
+            }
 
         }
         else
@@ -173,6 +207,11 @@ public class MyRobotController : MonoBehaviour
         
     }
 
+    bool LinesIntersect(Vector3 a1, Vector3 a2, Vector3 b1, Vector3 b2)
+    {
+        return false;
+    }
+
     void MoveTarget(Transform target)
     {
         target.position = endFactor.position;
@@ -188,6 +227,21 @@ public class MyRobotController : MonoBehaviour
 
         lineRenderer3.SetPosition(0, Joint2.position); 
         lineRenderer3.SetPosition(1, endFactor.position);
+    }
+
+    void UpdateCollider(BoxCollider2D boxCollider, Vector3 startPos, Vector3 endPos)
+    {
+        //colocamos el boxCollider en el medio de la recta
+        Vector3 midPoint = (startPos + endPos) / 2;
+        boxCollider.transform.position = midPoint;
+
+        float distance = Vector3.Distance(startPos, endPos);
+        boxCollider.size = new Vector2(distance, collidersSize);
+
+        //Rotar Collider
+        Vector3 direction = endPos - startPos;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        boxCollider.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
     Vector3 CalculateGradient(Transform target)
