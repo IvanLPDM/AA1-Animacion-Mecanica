@@ -20,6 +20,9 @@ public class MyRobotController : MonoBehaviour
     public Transform Stud_target;
     public Transform Workbench_destination;
 
+    public float minAngle;
+    public float maxAngle;
+
     public Transform InitialPosition;
 
     public bool pickTarget = false;
@@ -182,6 +185,10 @@ public class MyRobotController : MonoBehaviour
 
             gradient = CalculateGradient(target);
             theta += -alpha * gradient;
+
+            theta.x = Mathf.Clamp(theta.x, minAngle * Mathf.Deg2Rad, maxAngle * Mathf.Deg2Rad);
+            theta.y = Mathf.Clamp(theta.y, minAngle * Mathf.Deg2Rad, maxAngle * Mathf.Deg2Rad);
+            theta.z = Mathf.Clamp(theta.z, minAngle * Mathf.Deg2Rad, maxAngle * Mathf.Deg2Rad);
 
             endFactor.position = GetEndFactorPosition();
             Joint1.position = GetJoint1Position();

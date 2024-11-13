@@ -200,7 +200,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 265052}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.98, y: 3.06, z: 0}
+  m_LocalPosition: {x: 3.9, y: 3.73, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1034,6 +1034,8 @@ MonoBehaviour:
   endFactor: {fileID: 1684408551}
   Stud_target: {fileID: 265054}
   Workbench_destination: {fileID: 1372278621}
+  minAngle: -160
+  maxAngle: 160
   InitialPosition: {fileID: 1402191265}
   pickTarget: 0
   alpha: 0.005
