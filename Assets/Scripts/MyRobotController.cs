@@ -7,7 +7,8 @@ enum RobotState
 {
     P_target,
     P_WorkBench,
-    P_InitialPosition
+    P_InitialPosition,
+    P_EvadeCollision
 };
 
 public class MyRobotController : MonoBehaviour
@@ -25,6 +26,7 @@ public class MyRobotController : MonoBehaviour
 
     private bool hasPickedUp = false;
     private RobotState robotState = RobotState.P_target;
+    private RobotState lastRobotState = RobotState.P_target;
 
     public float alpha = 0.1f;
     private float tolerance = 1f;
@@ -38,9 +40,13 @@ public class MyRobotController : MonoBehaviour
 
     public float collidersSize;
 
+    public float evadeCollisionMagnitude = 0.05f;
+
     private BoxCollider2D colliderBetweenJoint0And1;
     private BoxCollider2D colliderBetweenJoint1And2;
     private BoxCollider2D colliderBetweenJoint2And3;
+
+    public float colliderReduced;
 
     private float l1;
     private float l2;
@@ -73,6 +79,7 @@ public class MyRobotController : MonoBehaviour
         colliderBetweenJoint0And1 = CreateColliderBetween(Joint0, Joint1);
         colliderBetweenJoint1And2 = CreateColliderBetween(Joint1, Joint2);
         colliderBetweenJoint2And3 = CreateColliderBetween(Joint2, endFactor);
+
     }
 
     void InitializeLineRenderer(LineRenderer lineRenderer)
@@ -94,12 +101,19 @@ public class MyRobotController : MonoBehaviour
         colliderObject.transform.parent = transform;  // Hacer que el objeto collider sea hijo del controlador
 
         BoxCollider2D boxCollider = colliderObject.AddComponent<BoxCollider2D>();
-        boxCollider.isTrigger = true; 
+        boxCollider.isTrigger = true;
+
+        Rigidbody2D rb = colliderObject.AddComponent<Rigidbody2D>();
+        rb.isKinematic = true;  
+
+        //Collision
+        Wall wallCollider = colliderObject.AddComponent<Wall>();
+        wallCollider.robotController = this;  
+
 
         return boxCollider;
     }
 
-    // Update is called once per frame
     void Update()
     {
         //distance = Vector3.Distance(Joint0.position, Stud_target.position);
@@ -146,6 +160,12 @@ public class MyRobotController : MonoBehaviour
 
                 break;
 
+            case RobotState.P_EvadeCollision:
+
+               
+
+                break;
+
             default: 
                 break; 
         }
@@ -163,17 +183,11 @@ public class MyRobotController : MonoBehaviour
             gradient = CalculateGradient(target);
             theta += -alpha * gradient;
 
-            Vector3 newEndFactorPos = GetEndFactorPosition();
-            Vector3 newJoint1Pos = GetJoint1Position();
-            Vector3 newJoint2Pos = GetJoint2Position();
+            endFactor.position = GetEndFactorPosition();
+            Joint1.position = GetJoint1Position();
+            Joint2.position = GetJoint2Position();
 
-            // Verifica si se cruza con el segmento previo
-            if (!LinesIntersect(Joint0.position, newJoint1Pos, newJoint1Pos, newJoint2Pos))
-            {
-                endFactor.position = newEndFactorPos;
-                Joint1.position = newJoint1Pos;
-                Joint2.position = newJoint2Pos;
-            }
+          
 
         }
         else
@@ -236,7 +250,11 @@ public class MyRobotController : MonoBehaviour
         boxCollider.transform.position = midPoint;
 
         float distance = Vector3.Distance(startPos, endPos);
-        boxCollider.size = new Vector2(distance, collidersSize);
+
+        //Reducir el collider
+        float reducedDistance = distance - colliderReduced * collidersSize;
+
+        boxCollider.size = new Vector2(reducedDistance, collidersSize);
 
         //Rotar Collider
         Vector3 direction = endPos - startPos;
@@ -316,4 +334,32 @@ public class MyRobotController : MonoBehaviour
 
         return newPosition;
     }
+
+
+    //Collisiones
+    public void OnSegmentCollision(Wall collider, Collider2D other, Vector3 oppositeDirection)
+    {
+        lastRobotState = robotState;
+
+        //robotState = RobotState.P_EvadeCollision;
+
+        evitarCollision(oppositeDirection);
+
+        Debug.Log($"Colisión detectada en {collider.gameObject.name} con {other.gameObject.name}");
+        // Lógica adicional para evitar el cruce o realizar acciones específicas
+    }
+
+    public void NoCollision()
+    {
+        robotState = lastRobotState;
+    }
+
+    void evitarCollision(Vector3 collisionDirection)
+    {
+        Joint1.position += collisionDirection * evadeCollisionMagnitude;
+        Joint2.position += collisionDirection * evadeCollisionMagnitude;
+        endFactor.position += collisionDirection * evadeCollisionMagnitude;
+    }
+
+
 }
